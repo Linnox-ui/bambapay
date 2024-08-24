@@ -1,4 +1,5 @@
 import HeaderBox from '@/components/HeaderBox'
+import LinkAccountBox from '@/components/LinkAccountBox';
 import RightSidebar from '@/components/RightSidebar';
 import TotalBalanceBox from '@/components/TotalBalanceBox';
 import React from 'react'
