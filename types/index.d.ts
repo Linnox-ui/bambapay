@@ -8,16 +8,16 @@ declare type SearchParamProps = {
 // ========================================
 
 declare type SignUpParams = {
-  firstName: string;
-  lastName: string;
-  address1: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  dateOfBirth: string;
-  ssn: string;
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
+  address1?: string;
+  county?: string;
+  subCounty?: string;
+  postalCode?: string;
+  dateOfBirth?: string;
+  phoneNumber?: string;
 };
 
 declare type LoginUser = {
@@ -35,12 +35,13 @@ declare type User = {
   lastName: string;
   name: string;
   address1: string;
-  city: string;
-  state: string;
+  county: string;
+  subCounty: string;
   postalCode: string;
   dateOfBirth: string;
-  ssn: string;
+  phoneNumber: string;
 };
+
 
 declare type NewUserParams = {
   userId: string;
@@ -136,6 +137,13 @@ declare type NewDwollaCustomerParams = {
   dateOfBirth: string;
   ssn: string;
 };
+
+declare interface DropdownProps {
+  label: string;
+  options: string[]; // Assuming options is an array of strings
+  value: string;
+  onChange: (value: string) => void;
+}
 
 declare interface CreditCardProps {
   account: Account;
@@ -328,3 +336,20 @@ declare interface getBankProps {
 declare interface getBankByAccountIdProps {
   accountId: string;
 }
+
+// Add Preferences type
+declare type Preferences = {
+  id: string;
+  name: string;
+  email: string;
+  // Define additional properties here if needed
+};
+
+// Existing type definitions...
+
+declare type SearchParamProps = {
+  params: { [key: string]: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+// Other existing type declarations
