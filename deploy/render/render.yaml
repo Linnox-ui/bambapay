@@ -1,0 +1,76 @@
+# Render Blueprint for BambaPay Backend
+# Deploy this at: https://dashboard.render.com/blueprints
+
+services:
+  - type: web
+    name: bambapay-api
+    runtime: node
+    plan: standard
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: bambapay-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ADMIN_SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://bambapay.vercel.app
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: web
+    name: bambapay-webhook
+    runtime: node
+    plan: standard
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEBHOOK_ONLY
+        value: "true"
+    routes:
+      - type: rewrite
+        source: /api/payments/webhook
+        destination: /api/payments/webhook
+
+  - type: redis
+    name: bambapay-redis
+    plan: free
+    region: oregon
+    ipAllowList: []
+
+  - type: cron
+    name: bambapay-daily-report
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: node scripts/daily-report.js
+    schedule: 0 9 * * *
+
+databases:
+  - name: bambapay-db
+    databaseName: bambapay
+    user: bambapay
+    plan: standard
+    region: oregon
+    ipAllowList: []
