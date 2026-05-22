@@ -110,24 +110,23 @@ class MpesaService {
     const certPath = path.resolve(__dirname, '../certs/sandbox.cer');
     
     if (!fs.existsSync(certPath)) {
-      throw new Error(`CRITICAL MISSING ASSET: Safaricom certificate not found at ${certPath}`);
+      throw new Error(`CRITICAL: Safaricom certificate not found at ${certPath}`);
     }
 
-    // 1. Read the file as a raw binary Buffer, NOT as a utf8 string
+    // 1. Read the exact binary DER file into memory
     const certBuffer = fs.readFileSync(certPath);
-    let certString = certBuffer.toString('utf8').trim();
 
-    // 2. Daraja Quirk Check: If the file lacks the standard PEM headers, it is binary or raw.
-    // We must forcefully convert it to a valid PEM structure.
-    if (!certString.startsWith('-----BEGIN CERTIFICATE-----')) {
-      certString = `-----BEGIN CERTIFICATE-----\n${certBuffer.toString('base64')}\n-----END CERTIFICATE-----`;
-    }
+    // 2. Delegate ASN.1 parsing and structural validation to Node's native engine
+    const x509 = new crypto.X509Certificate(certBuffer);
 
     const password = process.env.MPESA_INITIATOR_PASSWORD || 'Safaricom999!';
 
-    // 3. Execute encryption with the properly formatted key
+    // 3. Encrypt using the mathematically isolated public key
     const encrypted = crypto.publicEncrypt(
-      { key: certString, padding: crypto.constants.RSA_PKCS1_PADDING },
+      { 
+        key: x509.publicKey, 
+        padding: crypto.constants.RSA_PKCS1_PADDING 
+      },
       Buffer.from(password)
     );
     
