@@ -4,9 +4,10 @@ const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // use SSL
-      family: 4, // <-- THE ULTIMATE FIX: Forces the socket to strictly use IPv4
+      port: 587, // Changed from 465
+      secure: false, // Must be false for 587
+      requireTLS: true, // Forces secure upgrade
+      family: 4, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
