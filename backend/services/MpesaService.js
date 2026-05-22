@@ -137,19 +137,21 @@ class MpesaService {
     const token = await this.getOAuthToken();
     const securityCredential = this.getSecurityCredential();
     const formattedPhone = this._formatPhoneNumber(phoneNumber);
+// Strip trailing slashes or default to the known Render URL
+const cleanBaseUrl = (process.env.BACKEND_URL || 'https://bambapay-backend.onrender.com').replace(/\/$/, '');
 
-    const payload = {
-      InitiatorName: process.env.MPESA_INITIATOR_NAME || 'testapi',
-      SecurityCredential: securityCredential,
-      CommandID: 'BusinessPayment',
-      Amount: Math.ceil(amount),
-      PartyA: process.env.MPESA_B2C_SHORTCODE || '600497',
-      PartyB: formattedPhone,
-      Remarks: 'BambaPay Withdrawal',
-      QueueTimeOutURL: `${process.env.BACKEND_URL}/api/webhooks/b2c/timeout`,
-      ResultURL: `${process.env.BACKEND_URL}/api/webhooks/b2c/result`,
-      Occasion: transactionId
-    };
+const payload = {
+  InitiatorName: process.env.MPESA_INITIATOR_NAME || 'testapi',
+  SecurityCredential: securityCredential,
+  CommandID: 'BusinessPayment',
+  Amount: Math.ceil(amount),
+  PartyA: process.env.MPESA_B2C_SHORTCODE || '600497',
+  PartyB: formattedPhone,
+  Remarks: 'BambaPay Withdrawal',
+  QueueTimeOutURL: `${cleanBaseUrl}/api/webhooks/b2c/timeout`,
+  ResultURL: `${cleanBaseUrl}/api/webhooks/b2c/result`,
+  Occasion: transactionId
+};
 
     try {
       const response = await axios.post(
