@@ -1,16 +1,11 @@
 const nodemailer = require('nodemailer');
 
-/**
- * Send an email using nodemailer
- * @param {string} to - Recipient email address
- * @param {string} subject - Email subject
- * @param {string} text - Plain text email body
- * @returns {Promise<Object>} - nodemailer info object
- */
 const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // use SSL
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
