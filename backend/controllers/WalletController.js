@@ -124,6 +124,7 @@ class WalletController {
    * POST /api/wallet/withdraw
    */
     static async initiateWithdrawal(req, res) {
+      const receiver = phoneNumber;
       let session = null;
   
       try {
@@ -188,7 +189,7 @@ class WalletController {
         const transaction = new Transaction({
           transactionId,
           sender: userId,
-          receiver: null, // B2C goes to external phone, not an internal user
+          receiver: receiver,
           amount: parsedAmount,
           currency: 'KES',
           type: 'withdrawal',
