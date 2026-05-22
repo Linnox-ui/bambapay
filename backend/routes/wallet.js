@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const WalletController = require('../controllers/WalletController');
-// Import your auth middleware if you have it to protect the route
-const { protect } = require('../middleware/auth'); 
+const { protect } = require('../middleware/auth'); // Adjust path if your auth middleware is named differently
 
-// Add this exact line:
-router.post('/withdraw', protect, WalletController.initiateWithdrawal); 
-// Note: If you don't use 'protect' middleware, just remove it from the line above.
+// Explicitly route the GET request to the getBalance controller
+router.get('/balance', protect, WalletController.getBalance);
+
+// Your existing withdrawal route
+router.post('/withdraw', protect, WalletController.initiateWithdrawal);
 
 module.exports = router;
