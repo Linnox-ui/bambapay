@@ -1,11 +1,16 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// CRITICAL FIX: Render does not support outbound IPv6. 
+// This forces Node.js to use IPv4 to connect to Gmail.
+dns.setDefaultResultOrder('ipv4first');
 
 const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
-      secure: true, // use SSL
+      secure: true, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
