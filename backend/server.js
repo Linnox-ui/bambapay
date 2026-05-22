@@ -16,6 +16,9 @@ const walletRoutes = require('./routes/wallet');
 
 const app = express();
 
+// Trust the first proxy (Render) so rate limiting works correctly
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet({
   contentSecurityPolicy: {
