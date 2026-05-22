@@ -134,6 +134,79 @@ class WalletController {
       });
     }
   }
+  /**
+   * Initiate an M-Pesa B2C Withdrawal
+   * POST /api/wallet/withdraw
+   */
+  static async initiateWithdrawal(req, res) {
+    try {
+      const { amount, phoneNumber } = req.body;
+      const userId = req.user.id; // From auth middleware
+
+      // 1. Validate inputs
+      if (!amount || !phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          message: 'Amount and phoneNumber are required'
+        });
+      }
+
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount < 10) {
+        return res.status(400).json({
+          success: false,
+          message: 'Minimum withdrawal amount is 10 KES'
+        });
+      }
+
+      // 2. Generate a unique transaction ID
+      const transactionId = `WTH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+      // 3. Create a pending transaction record
+      const transaction = new Transaction({
+        transactionId,
+        sender: userId,
+        receiver: userId,
+        amount: parsedAmount,
+        currency: 'KES',
+        type: 'withdrawal',
+        status: 'PENDING',
+        provider: 'MPESA',
+        description: 'M-Pesa B2C Withdrawal',
+        metadata: {
+          phoneNumber: phoneNumber,
+          initiatedAt: new Date()
+        }
+      });
+
+      await transaction.save();
+
+      // 4. Execute the M-Pesa B2C command via MpesaService
+      // This maps to the initiateB2C function we wrote earlier
+      const b2cResponse = await MpesaService.initiateB2C(phoneNumber, parsedAmount, transactionId);
+      console.log('[WalletController] B2C Initiated:', b2cResponse);
+
+      // 5. Return success to the frontend
+      return res.status(200).json({
+        success: true,
+        message: 'Withdrawal initiated successfully',
+        data: {
+          transactionId: transaction.transactionId,
+          amount: parsedAmount,
+          currency: 'KES',
+          status: 'PENDING'
+        }
+      });
+
+    } catch (error) {
+      console.error('[WalletController] Withdrawal initiation failed:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to initiate withdrawal. Please try again.',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
 }
 
 module.exports = WalletController;
