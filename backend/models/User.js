@@ -49,12 +49,22 @@ const userSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'USD',
-    enum: ['USD', 'EUR', 'GBP', 'KES', 'NGN', 'ZAR']
+    default: 'KES',
+    enum: ['KES', 'UGX', 'TZS', 'NGN', 'ZMW']
   },
   isVerified: {
     type: Boolean,
     default: false
+  },
+  verificationOTP: {
+    type: String,
+    default: null,
+    select: false
+  },
+  otpExpires: {
+    type: Date,
+    default: null,
+    select: false
   },
   isAdmin: {
     type: Boolean,
@@ -66,10 +76,6 @@ const userSchema = new mongoose.Schema({
     default: 'pending'
   },
   avatar: {
-    type: String,
-    default: null
-  },
-  stripeCustomerId: {
     type: String,
     default: null
   },

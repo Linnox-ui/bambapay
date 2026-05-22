@@ -20,6 +20,7 @@ import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminTransactions from './pages/AdminTransactions';
+import VerifyOTP from './pages/VerifyOTP';
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify" element={<VerifyOTP />} />
 
           {/* User Dashboard Routes */}
           <Route path="/dashboard" element={

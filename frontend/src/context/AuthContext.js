@@ -44,8 +44,17 @@ export const AuthProvider = ({ children }) => {
     return user;
   };
 
+  // Updated: register no longer logs the user in. It returns the response
+  // so the Register page can redirect to OTP verification.
   const register = async (userData) => {
     const res = await api.post('/auth/register', userData);
+    return res.data;
+  };
+
+  // New: verifyAccount — called after OTP is submitted.
+  // Saves token + user, sets auth state, returns the user object.
+  const verifyAccount = async (email, otp) => {
+    const res = await api.post('/auth/verify', { email, otp });
     const { token, user } = res.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
@@ -73,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       loading, 
       login, 
       register, 
+      verifyAccount,
       logout, 
       updateUser 
     }}>

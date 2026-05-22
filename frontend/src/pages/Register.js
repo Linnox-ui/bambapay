@@ -58,7 +58,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const user = await register({
+      const response = await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -67,8 +67,12 @@ const Register = () => {
         pin: formData.pin,
         currency: formData.currency
       });
-      toast.success(`Welcome to BambaPay, ${user.firstName}!`);
-      navigate('/dashboard');
+
+      // Backend now returns { success: true, data: { email } }
+      // Redirect to OTP verification page with email in state
+      const email = response.data?.email || formData.email;
+      toast.success('Account created! Please verify your email.');
+      navigate('/verify', { state: { email } });
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed';
       toast.error(message);
