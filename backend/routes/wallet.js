@@ -1,14 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
 const WalletController = require('../controllers/WalletController');
+// Import your auth middleware if you have it to protect the route
+const { protect } = require('../middleware/auth'); 
 
-// POST /api/wallet/deposit
-// Protected route: requires valid JWT
-router.post('/deposit', protect, WalletController.initiateDeposit);
-
-// GET /api/wallet/balance
-// Protected route: fetches the logged-in user's current balance
-router.get('/balance', protect, WalletController.getBalance);
+// Add this exact line:
+router.post('/withdraw', protect, WalletController.initiateWithdrawal); 
+// Note: If you don't use 'protect' middleware, just remove it from the line above.
 
 module.exports = router;
