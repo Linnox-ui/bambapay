@@ -103,20 +103,34 @@ class MpesaService {
   // --- NEW B2C LOGIC INTEGRATED HERE ---
 
   getSecurityCredential() {
+    const crypto = require('crypto');
+    const fs = require('fs');
+    const path = require('path');
+    
     const certPath = path.resolve(__dirname, '../certs/sandbox.cer');
     
-    // Fail-safe check to prevent fatal filesystem crashes
     if (!fs.existsSync(certPath)) {
       throw new Error(`CRITICAL MISSING ASSET: Safaricom certificate not found at ${certPath}`);
     }
 
-    const cert = fs.readFileSync(certPath, 'utf8');
+    // 1. Read the file as a raw binary Buffer, NOT as a utf8 string
+    const certBuffer = fs.readFileSync(certPath);
+    let certString = certBuffer.toString('utf8').trim();
+
+    // 2. Daraja Quirk Check: If the file lacks the standard PEM headers, it is binary or raw.
+    // We must forcefully convert it to a valid PEM structure.
+    if (!certString.startsWith('-----BEGIN CERTIFICATE-----')) {
+      certString = `-----BEGIN CERTIFICATE-----\n${certBuffer.toString('base64')}\n-----END CERTIFICATE-----`;
+    }
+
     const password = process.env.MPESA_INITIATOR_PASSWORD || 'Safaricom999!';
 
+    // 3. Execute encryption with the properly formatted key
     const encrypted = crypto.publicEncrypt(
-      { key: cert, padding: crypto.constants.RSA_PKCS1_PADDING },
+      { key: certString, padding: crypto.constants.RSA_PKCS1_PADDING },
       Buffer.from(password)
     );
+    
     return encrypted.toString('base64');
   }
 
