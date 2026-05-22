@@ -32,7 +32,7 @@ const Dashboard = () => {
         api.get('/wallet/balance'),
         api.get('/transactions?limit=5')
       ]);
-      setBalance(balanceRes.data.balance);
+      setBalance(balanceRes.data.data.balance);
       setTransactions(txnRes.data.transactions);
       setStats(txnRes.data.summary);
       updateUser({ ...user, balance: balanceRes.data.balance });
@@ -97,7 +97,7 @@ const Dashboard = () => {
         <div className="flex items-baseline gap-2">
           <span className="text-dark-400 text-2xl">{user?.currency}</span>
           <span className="text-5xl font-bold text-white">
-            {showBalance ? balance.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'}
+          {showBalance ? (balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'}
           </span>
         </div>
         <div className="mt-4 flex items-center gap-4 text-sm">
