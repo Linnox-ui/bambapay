@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const MpesaService = require('../services/MpesaService');
 const User = require('../models/User');
