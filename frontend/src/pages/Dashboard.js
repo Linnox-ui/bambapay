@@ -32,20 +32,22 @@ const Dashboard = () => {
         api.get('/wallet/balance'),
         api.get('/transactions?limit=5')
       ]);
-      setBalance(balanceRes.data.data.balance);
+      // Ensure you are using the correct nested path from our previous fix
+      setBalance(balanceRes.data.data.balance); 
       setTransactions(txnRes.data.transactions);
       setStats(txnRes.data.summary);
-      updateUser({ ...user, balance: balanceRes.data.balance });
+      
+      // REMOVED: updateUser(...) to prevent the infinite render loop
     } catch (error) {
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  }, [user, updateUser]);
+  }, []); // <-- Empty dependency array is critical here
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30s
+    const interval = setInterval(fetchDashboardData, 60000); // Refresh every 30s
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
