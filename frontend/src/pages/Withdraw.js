@@ -58,7 +58,7 @@ const Withdraw = ({ onBalanceRefresh }) => {
 
     setIsLoading(true);
     try {
-      const res = await api.post('/api/wallet/withdraw', {
+      const res = await api.post('/wallet/withdraw', {
         amount: Number(formData.amount),
         phoneNumber: formData.phoneNumber.trim()
       });
