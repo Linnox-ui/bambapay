@@ -1,31 +1,25 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+// Initialize with the API key from Render
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (to, subject, text) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587, // Changed from 465
-      secure: false, // Must be false for 587
-      requireTLS: true, // Forces secure upgrade
-      family: 4, 
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+    const { data, error } = await resend.emails.send({
+      from: 'onboarding@resend.dev', // Resend's default testing address
+      to: to, // Must be the email you used to sign up for Resend
+      subject: subject,
+      text: text
     });
 
-    const mailOptions = {
-      from: `"BambaPay" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text
-    };
+    if (error) {
+      throw new Error(error.message);
+    }
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email] Sent to ${to}: ${info.messageId}`);
-    return info;
+    console.log(`[Email] OTP successfully sent to ${to} via HTTP API`);
+    return data;
   } catch (error) {
-    console.error('[Email] Failed to send email:', error.message);
+    console.error('[Email Error]:', error.message);
     throw new Error(`Email delivery failed: ${error.message}`);
   }
 };
