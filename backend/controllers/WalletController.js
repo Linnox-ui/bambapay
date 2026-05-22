@@ -86,6 +86,54 @@ class WalletController {
       });
     }
   }
+
+  /**
+   * Get the logged-in user's wallet balance
+   * GET /api/wallet/balance
+   */
+  static async getBalance(req, res) {
+    try {
+      const userId = req.user.id;
+
+      // Find all completed transactions involving this user
+      const transactions = await Transaction.find({
+        $or: [{ sender: userId }, { receiver: userId }],
+        status: { $in: ['COMPLETED', 'SUCCESS'] } 
+      });
+
+      let balance = 0;
+
+      transactions.forEach(tx => {
+        const isReceiver = tx.receiver.toString() === userId.toString();
+        const isSender = tx.sender.toString() === userId.toString();
+
+        if (tx.type === 'deposit' && isReceiver) {
+          balance += tx.amount; // Money coming in
+        } else if (tx.type === 'transfer') {
+          if (isReceiver) balance += tx.amount; // Received transfer
+          if (isSender) balance -= tx.amount;   // Sent transfer
+        } else if (tx.type === 'withdrawal' && isSender) {
+          balance -= tx.amount; // Money going out
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          balance: balance,
+          currency: 'KES'
+        }
+      });
+
+    } catch (error) {
+      console.error('[WalletController] Failed to fetch balance:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch wallet balance.',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
 }
 
 module.exports = WalletController;
