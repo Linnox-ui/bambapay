@@ -122,16 +122,6 @@ const Login = () => {
               </Link>
             </p>
           </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 rounded-xl bg-dark-950/50 border border-dark-700/50">
-            <p className="text-xs font-medium text-dark-400 uppercase tracking-wider mb-2">Demo Accounts</p>
-            <div className="space-y-1 text-sm">
-              <p className="text-dark-300"><span className="text-primary-400">Admin:</span> admin@bambapay.com / Admin123!</p>
-              <p className="text-dark-300"><span className="text-primary-400">User:</span> john@example.com / Password123!</p>
-              <p className="text-dark-300"><span className="text-primary-400">PIN:</span> 1234 (for all transactions)</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
