@@ -21,8 +21,12 @@ export const AuthProvider = ({ children }) => {
           setUser(res.data.user);
           localStorage.setItem('user', JSON.stringify(res.data.user));
         })
-        .catch(() => {
-          logout();
+        .catch((error) => {
+          // Only log out if the token is explicitly rejected (401 or 403)
+          // Ignore 429s (Rate Limit) or network failures so the user stays logged in
+          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            logout();
+          }
         })
         .finally(() => setLoading(false));
     } else {
