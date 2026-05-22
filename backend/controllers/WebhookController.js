@@ -184,6 +184,164 @@ class WebhookController {
   }
 
   /**
+ * Process Safaricom B2C (Business-to-Customer) withdrawal callback
+ * Safaricom sends: req.body.Result
+ */
+static async handleB2CCallback(req, res) {
+  // Acknowledge immediately
+  res.status(200).send('B2C Webhook received');
+
+  let session = null;
+
+  try {
+    const result = req.body?.Result;
+
+    if (!result) {
+      console.error('[B2C Webhook] Invalid payload. Missing req.body.Result');
+      console.error('[B2C Webhook] Body:', JSON.stringify(req.body));
+      return;
+    }
+
+    const {
+      ConversationID,
+      OriginatorConversationID,
+      ResultCode,
+      ResultDesc,
+      TransactionID,
+      ResultParameters
+    } = result;
+
+    if (!ConversationID) {
+      console.error('[B2C Webhook] Missing ConversationID');
+      return;
+    }
+
+    console.log(`[B2C Webhook] Processing for ConversationID: ${ConversationID}`);
+    console.log(`[B2C Webhook] ResultCode: ${ResultCode}, ResultDesc: ${ResultDesc}`);
+
+    // Extract metadata from ResultParameters
+    let transactionAmount = null;
+    let transactionReceipt = null;
+    let receiverParty = null;
+
+    if (ResultParameters?.ResultParameter) {
+      for (const param of ResultParameters.ResultParameter) {
+        switch (param.Key) {
+          case 'TransactionAmount':
+            transactionAmount = parseFloat(param.Value);
+            break;
+          case 'TransactionReceipt':
+            transactionReceipt = param.Value;
+            break;
+          case 'ReceiverPartyPublicName':
+            receiverParty = param.Value;
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Find withdrawal transaction by ConversationID (stored as providerTransactionId)
+    const transaction = await Transaction.findOne({
+      providerTransactionId: ConversationID,
+      provider: 'MPESA',
+      type: 'WITHDRAWAL'
+    }).session(session);
+
+    if (!transaction) {
+      console.error(`[B2C Webhook] Withdrawal not found for ConversationID: ${ConversationID}`);
+      await session.abortTransaction();
+      return;
+    }
+
+    // Idempotency check
+    if (transaction.status === 'SUCCESS' || transaction.status === 'FAILED') {
+      console.log(`[B2C Webhook] Transaction ${transaction._id} already ${transaction.status}. Skipping.`);
+      await session.abortTransaction();
+      return;
+    }
+
+    if (transaction.status !== 'PENDING') {
+      console.warn(`[B2C Webhook] Transaction ${transaction._id} in unexpected state: ${transaction.status}`);
+      await session.abortTransaction();
+      return;
+    }
+
+    const isSuccess = ResultCode === 0;
+
+    if (isSuccess) {
+      console.log(`[B2C Webhook] SUCCESS for withdrawal ${transaction._id}`);
+
+      transaction.status = 'SUCCESS';
+      transaction.providerTransactionId = transactionReceipt || TransactionID || ConversationID;
+      transaction.metadata = {
+        ...transaction.metadata,
+        mpesaReceiptNumber: transactionReceipt,
+        transactionId: TransactionID,
+        originatorConversationId: OriginatorConversationID,
+        receiverPartyPublicName: receiverParty,
+        resultDesc: ResultDesc,
+        callbackAmount: transactionAmount,
+        processedAt: new Date(),
+        rawCallback: req.body
+      };
+
+      await transaction.save({ session });
+
+      // NOTE: For withdrawals, the balance was likely ALREADY debited when
+      // the withdrawal was initiated (pessimistic approach). If you used
+      // optimistic (debit on callback), debit here instead.
+      // If already debited, just confirm — no balance change needed.
+
+      console.log(`[B2C Webhook] Withdrawal ${transaction._id} confirmed as SUCCESS`);
+
+    } else {
+      console.log(`[B2C Webhook] FAILURE for withdrawal ${transaction._id}: ${ResultDesc}`);
+
+      transaction.status = 'FAILED';
+      transaction.metadata = {
+        ...transaction.metadata,
+        failureReason: ResultDesc,
+        resultCode: ResultCode,
+        originatorConversationId: OriginatorConversationID,
+        processedAt: new Date(),
+        rawCallback: req.body
+      };
+
+      await transaction.save({ session });
+
+      // CRITICAL: If you debited balance optimistically on initiation,
+      // you MUST refund the user here:
+      const updatedUser = await User.findByIdAndUpdate(
+        transaction.sender,  // sender = the user withdrawing
+        { $inc: { balance: transaction.amount } },
+        { session, new: true }
+      );
+
+      console.log(`[B2C Webhook] Refunded ${transaction.amount} to user ${updatedUser._id}. New balance: ${updatedUser.balance}`);
+    }
+
+    await session.commitTransaction();
+    console.log(`[B2C Webhook] Transaction ${transaction._id} committed. Status: ${transaction.status}`);
+
+  } catch (error) {
+    console.error('[B2C Webhook] Error:', error);
+
+    if (session && session.inTransaction()) {
+      try { await session.abortTransaction(); } catch (e) {}
+    }
+
+    console.error('[B2C Webhook] Critical: Manual reconciliation may be required.');
+  } finally {
+    if (session) await session.endSession();
+  }
+}
+
+  /**
    * Health check endpoint for webhook monitoring
    */
   static async healthCheck(req, res) {
