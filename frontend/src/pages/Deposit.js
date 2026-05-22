@@ -70,7 +70,7 @@ const Deposit = () => {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       const parsedAmount = parseFloat(amount);
 
-      const response = await api.post('/api/wallet/deposit', {
+      const response = await api.post('/wallet/deposit', {
         amount: parsedAmount,
         phoneNumber: formattedPhone
       });
